@@ -13,8 +13,23 @@ const config: Config = {
         "gradient-conic":
           "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
       },
+      backgroundColor: {
+        'udemyPurple': 'rgba(86, 36, 208, 1)',
+      },
+      textColor: {
+        'udemyPurple': 'rgba(86, 36, 208, 1)',
+      },
+      stroke: {
+        'udemyPurple': 'rgba(86, 36, 208, 1)',
+      },
     },
   },
-  plugins: [],
+  plugins: [require('daisyui')],
+  daisyui: {
+    themes: [
+      "acid",
+      // "winter"
+    ],
+  },
 };
 export default config;

@@ -1,0 +1,10 @@
+.textSize{
+    font-size: 1rem;
+}
+.textSizeSm{
+    font-size: 0.8rem;
+    color: black;
+}
+.fontsBold{
+    font-weight: 700;
+}
