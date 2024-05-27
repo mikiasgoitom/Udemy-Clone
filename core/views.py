@@ -10,4 +10,16 @@ class RegisterForm(UserCreationForm):
 def home(request):
     return render(request, "home.html")
 def register(request):
-    return render(request, "registration/register.html", {"form": form})
+    if request.method == "POST":
+        form = RegisterForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect("/")
+        else:
+            messages.error(request, form.errors)
+            return render(request, "registration/register.html", {"form": form})
+    else:
+        form = RegisterForm()
+        return render(request, "registration/register.html", {"form": form})
+
+
