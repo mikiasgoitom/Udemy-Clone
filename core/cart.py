@@ -30,3 +30,35 @@ class Cart:
 
         self.cart = cart
 
+    def add(self, course_id: str):
+        course = Course.objects.get(id=course_id)
+        if str(course.id) not in self.cart:
+            self.cart.append(str(course.id))
+
+        self.save()
+
+    def remove(self, course_id: str):
+        if course_id in self.cart:
+            self.cart.remove(course_id)
+        self.save()
+
+    def clear(self):
+        self.cart.clear()
+        self.save()
+
+    def save(self):
+        self.session.modified = True
+
+    def __contains__(self, course: Course | str):
+        if not isinstance(course, str):
+            course = str(course.id)
+
+        return course in self.cart
+
+    def __iter__(self):
+        courses = Course.objects.filter(id__in=self.cart)
+        for course in courses:
+            yield course
+
+    def __len__(self):
+        return len(self.cart)
