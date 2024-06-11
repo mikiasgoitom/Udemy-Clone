@@ -95,37 +95,44 @@ urlpatterns = [
 TEMPLATES_DIR = os.path.join(BASE_DIR, 'templates')
 os.makedirs(TEMPLATES_DIR, exist_ok=True)
 
-item_list_html = """
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Item List</title>
-</head>
-<body>
-    <h1>Item List</h1>
-    <ul>
-        {% for item in items %}
-            <li><a href="{% url 'item_detail' item.pk %}">{{ item.name }}</a></li>
-        {% endfor %}
-    </ul>
-</body>
-</html>
-"""
+# views.py
+from django.shortcuts import render, redirect
+from .models import Post
+from .forms import PostForm
 
-item_detail_html = """
-<!DOCTYPE html>
-<html>
-<head>
-    <title>{{ item.name }}</title>
-</head>
-<body>
-    <h1>{{ item.name }}</h1>
-    <p>{{ item.description }}</p>
-    <p>Created at: {{ item.created_at }}</p>
-    <a href="{% url 'item_list' %}">Back to list</a>
-</body>
-</html>
-"""
+def post_list(request):
+    posts = Post.objects.all()
+    return render(request, 'blog/post_list.html', {'posts': posts})
+
+def post_detail(request, pk):
+    post = Post.objects.get(pk=pk)
+    return render(request, 'blog/post_detail.html', {'post': post})
+
+def post_create(request):
+    if request.method == 'POST':
+        form = PostForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('post_list')
+    else:
+        form = PostForm()
+    return render(request, 'blog/post_form.html', {'form': form})
+
+def post_update(request, pk):
+    post = Post.objects.get(pk=pk)
+    if request.method == 'POST':
+        form = PostForm(request.POST, instance=post)
+        if form.is_valid():
+            form.save()
+            return redirect('post_list')
+    else:
+        form = PostForm(instance=post)
+    return render(request, 'blog/post_form.html', {'form': form})
+
+def post_delete(request, pk):
+    post = Post.objects.get(pk=pk)
+    post.delete()
+    return redirect('post_list')
 
 with open(os.path.join(TEMPLATES_DIR, 'item_list.html'), 'w') as f:
     f.write(item_list_html)
