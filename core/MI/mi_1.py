@@ -140,6 +140,13 @@ with open(os.path.join(TEMPLATES_DIR, 'item_list.html'), 'w') as f:
 with open(os.path.join(TEMPLATES_DIR, 'item_detail.html'), 'w') as f:
     f.write(item_detail_html)
 
+
+
+class PostForm(forms.ModelForm):
+    class Meta:
+        model = Post
+        fields = ('title', 'content')
+
 # Admin site setup
 admin.autodiscover()
 admin.site.register(Item, ItemAdmin)
