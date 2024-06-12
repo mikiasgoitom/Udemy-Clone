@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>{% if form.instance.pk %}Edit{% else %}Create{% endif %} Event</title>
+</head>
+
+<body>
+    <h1>{% if form.instance.pk %}Edit{% else %}Create{% endif %} Event</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">{% if form.instance.pk %}Update{% else %}Create{% endif %} Event</button>
+    </form>
+    <a href="{% url 'calendar_view' %}">Back to Calendar</a>
+</body>
+
+</html>
