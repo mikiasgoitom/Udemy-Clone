@@ -12,6 +12,21 @@ from django.template import engines
 from django.contrib import admin
 from django.contrib.admin.sites import AdminSite
 from django.utils.html import escape
+from django.contrib.auth.models import User
+from django import forms
+from django.contrib.auth import authenticate, login, logout
+from django.shortcuts import redirect
+
+#URL patterns 
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('', item_list, name='item_list'),
+    path('item/<int:pk>/', item_detail, name='item_detail'),
+    path('register/', register, name='register'),
+    path('login/', user_login, name='login'),
+    path('logout/', user_logout, name='logout'),
+    path('item/<int:item_id>/comment/', add_comment, name='add_comment'),
+]
 
 # Configuration settings
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -37,6 +52,7 @@ settings.configure(
         'django.contrib.auth.middleware.AuthenticationMiddleware',
         'django.contrib.messages.middleware.MessageMiddleware',
         'django.middleware.clickjacking.XFrameOptionsMiddleware',
+        'path.to.SimpleMiddleware',
     ],
     TEMPLATES=[
         {
@@ -61,6 +77,15 @@ settings.configure(
     },
     STATIC_URL='/static/',
 )
+
+# middleware for the comments 
+class SimpleMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        return response
 
 # Models
 class Item(models.Model):
@@ -159,3 +184,84 @@ if __name__ == "__main__":
         execute_from_command_line(sys.argv)
     else:
         print("Usage: python single_file_django.py runserver|migrate|makemigrations")
+
+class UserRegistrationForm(forms.ModelForm):
+    password = forms.CharField(widget=forms.PasswordInput)
+    password2 = forms.CharField(widget=forms.PasswordInput, label='Confirm password')
+
+    class Meta:
+        model = User
+        fields = ('username', 'email')
+
+    def clean_password2(self):
+        cd = self.cleaned_data
+        if cd['password'] != cd['password2']:
+            raise forms.ValidationError('Passwords don\'t match.')
+        return cd['password2']
+
+class UserLoginForm(forms.Form):
+    username = forms.CharField()
+    password = forms.CharField(widget=forms.PasswordInput)
+
+
+def register(request):
+    if request.method == 'POST':
+        form = UserRegistrationForm(request.POST)
+        if form.is_valid():
+            new_user = form.save(commit=False)
+            new_user.set_password(form.cleaned_data['password'])
+            new_user.save()
+            return redirect('login')
+    else:
+        form = UserRegistrationForm()
+    return render(request, 'register.html', {'form': form})
+
+def user_login(request):
+    if request.method == 'POST':
+        form = UserLoginForm(request.POST)
+        if form.is_valid():
+            cd = form.cleaned_data
+            user = authenticate(request, username=cd['username'], password=cd['password'])
+            if user is not None:
+                login(request, user)
+                return redirect('item_list')
+            else:
+                return HttpResponse('Invalid login')
+    else:
+        form = UserLoginForm()
+    return render(request, 'login.html', {'form': form})
+
+def user_logout(request):
+    logout(request)
+    return redirect('login')
+
+# Comment model
+class Comment(models.Model):
+    item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'Comment by {self.user.username} on {self.item.name}'
+
+#Comment Form 
+class CommentForm(forms.ModelForm):
+    class Meta:
+        model = Comment
+        fields = ('text',)
+
+#comment view
+def add_comment(request, item_id):
+    item = get_object_or_404(Item, id=item_id)
+    if request.method == 'POST':
+        form = CommentForm(request.POST)
+        if form.is_valid():
+            comment = form.save(commit=False)
+            comment.item = item
+            comment.user = request.user
+            comment.save()
+            return redirect('item_detail', pk=item_id)
+    else:
+        form = CommentForm()
+    return render(request, 'add_comment.html', {'form': form})
